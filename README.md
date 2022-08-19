@@ -25,6 +25,9 @@ MAD detects a real Electron and the following emulators: Electrem, Elkulator, El
   - `5`: MAME
   - `6`: ElkJS
 
+## Example
+This [disk image](https://github.com/0xC0DE6502/machine-auto-detect-releases/raw/main/MAD-example.ssd) (or [tape image](https://github.com/0xC0DE6502/machine-auto-detect-releases/raw/main/MAD-example.uef)) contains a more elaborate example program. It illustrates the use of MAD for selecting specific delays/timings for very precise colour palette switching. Take a look at the [6502 asm source](https://github.com/0xC0DE6502/machine-auto-detect-releases/blob/main/MAD-example.6502) for this example program.
+
 ## Contact
 Please contact me on [Twitter](https://twitter.com/0xC0DE6502) if you have any issues or questions about MAD. I hope you find MAD useful and would like to be credited in your program if you use MAD. Cheers!
 

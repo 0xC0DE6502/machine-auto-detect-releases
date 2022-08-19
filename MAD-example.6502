@@ -1,0 +1,187 @@
+; Example program for Acorn Electron that illustrates the use of MAD
+; BeebAsm source (6502 asm)
+; Copyright (C) 2022 0xC0DE (0xC0DE6502)
+
+; Purpose:
+; Display 3 text lines in MODE 4 and hide the top and bottom line
+; This is done by very precisely timed colour palette changes
+; The specific delays/timings are different for each machine/emulator
+; Using MAD we know exactly which delays/timings to select
+; Our example program will therefore behave the same regardless of machine/emulator
+; No more multiple disk images OR unwanted glitches on some emulators!
+
+oswrch=&ffee
+osbyte=&fff4
+
+; zero page variables
+org &70
+
+.text_ptr skip 2
+.machine skip 1
+
+; main program
+org &2000
+
+.start_code
+
+  jsr detect ; what machine are we running on?
+  txa
+  bpl is_electron
+  rts ; not Electron, so quit
+
+.is_electron
+  asl a
+  sta machine ; index into machine delay tables (delay1 and delay2 below)
+
+  ; set MODE 4 and turn cursor off
+  ldx #lo(set_mode)
+  ldy #hi(set_mode)
+  jsr print_str
+
+  ; print some lines of text on the screen
+  ldx #lo(line1)
+  ldy #hi(line1)
+  jsr print_str
+  ldx #lo(line2)
+  ldy #hi(line2)
+  jsr print_str
+  inc line1+2
+  inc line1+2
+  ldx #lo(line1)
+  ldy #hi(line1)
+  jsr print_str
+  ldx #lo(line3)
+  ldy #hi(line3)
+  jsr print_str
+
+  ; press SPACE to begin the test
+.wait_for_space
+  ldx #256-99
+  ldy #&ff
+  lda #&81
+  jsr osbyte
+  bcc wait_for_space
+
+  sei ; don't want the pesky MOS involved ;)
+
+.again ; endless loop
+
+.wait_vsync
+  lda &fe00
+  and #4 ; vsync interrupt?
+  beq wait_vsync
+  lda #16+8
+  sta &fe05 ; acknowledge/clear vsync interrupt (and keep keyboard ROM paged in (ElkSD128))
+
+  ; rough scanline sync for both PAL fields
+  lda #%10001000
+  ldx #%10100000
+  sta &fe07 ; MODE 1
+  stx &fe07 ; MODE 4
+
+  ; delay from vsync to top of visible line using a machine specific delay
+  ldy machine
+  ldx delay1+0,y
+  lda delay1+1,y
+  tay
+  jsr delay
+
+  ; palette: yellow on blue (for the visible text line)
+  lda #&41
+  sta &fe08
+  lda #&11
+  sta &fe09
+
+  ; delay from top of visible line to bottom of visible line using a machine specific delay
+  ldy machine
+  ldx delay2+0,y
+  lda delay2+1,y
+  tay
+  jsr delay
+
+  ; rough scanline sync for both PAL fields
+  lda #%10001000
+  ldx #%10100000
+  sta &fe07 ; MODE 1
+  stx &fe07 ; MODE 4
+
+  ; palette: black on black (for the hidden text lines and the rest of the screen basically)
+  lda #&ff
+  sta &fe08
+  sta &fe09
+
+  jmp again
+
+; YX is 16bit delay counter
+.delay
+{
+.delay0
+  txa
+  bne dec_lo
+  dey
+  bmi done
+.dec_lo
+  dex
+  jmp delay0
+.done
+  rts
+}
+
+; YX points to string that is terminated with a negative number
+.print_str
+{
+  stx text_ptr+0
+  sty text_ptr+1
+  ldy #0
+.print_char
+  lda (text_ptr),y
+  bmi done
+  jsr oswrch
+  iny
+  bne print_char
+.done
+  rts
+}
+
+.set_mode ; set MODE 4 and turn cursor off
+  equs 22, 4, 23, 1, 0, 0, 0, 0, 0, 0, 0, 0, 255
+
+.line1
+  equs 31, 4, 6, "This line should NOT be visible", 255
+
+.line2
+  equs 31, 6, 7, "This line should be visible", 255
+
+.line3
+  equs 31, 9, 20, "Press SPACE to begin", 255
+
+.delay1 ; machine specific delays (indexed by zero page variable 'machine')
+  equw 710 ; real Elk
+  equw 702 ; Electrem
+  equw 708 ; Elkulator
+  equw 690 ; Electroniq
+  equw 710 ; CLK
+  equw 706 ; MAME
+  equw 708 ; ElkJS
+
+.delay2 ; machine specific delays (indexed by zero page variable 'machine')
+  equw 46 ; real Elk
+  equw 51 ; Electrem
+  equw 46 ; Elkulator
+  equw 54 ; Electroniq
+  equw 46 ; CLK
+  equw 51 ; MAME
+  equw 52 ; ElkJS
+
+.detect ; the MAD code that detects which machine/emulator this program runs on
+  incbin "tmpdel\MAD" ; include the Machine Auto Detect (MAD) binary
+
+.end_code
+
+; produce the files we need for the tape and disk images
+
+puttext "example-!BOOT.txt", "!BOOT", 0, 0
+
+putbasic "example-BOOT.txt", "BOOT"
+
+save "EXAMPLE", start_code, end_code
