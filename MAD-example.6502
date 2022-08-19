@@ -1,6 +1,6 @@
 ; Example program for Acorn Electron that illustrates the use of MAD
 ; BeebAsm source (6502 asm)
-; Copyright (C) 2022 0xC0DE (0xC0DE6502)
+; Copyright (C) 2022 0xC0DE (@0xC0DE6502)
 
 ; Purpose:
 ; Display 3 text lines in MODE 4 and hide the top and bottom line
