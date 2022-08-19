@@ -13,9 +13,9 @@ MAD detects a real Electron and the following emulators: Electrem, Elkulator, El
 2. Add MAD to your own program, e.g. `*LOAD MAD A00` (load address is flexible), `CALL &A00` and find the detected machine in the `X` register (see below)
 
 ## Features
-* Location independent code: load at any page aligned address
+* Location independent code, so load and execute anywhere (then discard)
 * Zero page is preserved, but CPU registers and flags are not
-* After calling MAD, the `A` register contains the MAD version (e.g. `&14` for MAD v1.4) and the `X` register contains the ID of the detected machine:
+* After calling MAD, the `A` register contains the MAD version (e.g. `&15` for MAD v1.5) and the `X` register contains the ID of the detected machine:
   - `-1` (`255`): Not an Electron (probably a BBC Micro or similar)
   - `0`: Real Electron
   - `1`: Electrem
