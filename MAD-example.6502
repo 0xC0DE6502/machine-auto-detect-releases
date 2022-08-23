@@ -73,13 +73,15 @@ org &2000
   lda #16+8
   sta &fe05 ; acknowledge/clear vsync interrupt (and keep keyboard ROM paged in (ElkSD128))
 
-  ; rough scanline sync for both PAL fields
+  ; rough scanline sync for both PAL fields --> &&&& this won't work here during VBLANK!! (no CPU stalling then)
   lda #%10001000
   ldx #%10100000
   sta &fe07 ; MODE 1
   stx &fe07 ; MODE 4
 
   ; delay from vsync to top of visible line using a machine specific delay
+  ; --> &&&& maybe use different delays for odd and even PAL fields
+  ; --> &&&& keep track of which field in interrupt handler after initial field detection
   ldy machine
   ldx delay1+0,y
   lda delay1+1,y
@@ -99,7 +101,7 @@ org &2000
   tay
   jsr delay
 
-  ; rough scanline sync for both PAL fields
+  ; rough scanline sync for both PAL fields --> &&&& use more precise syncing from 'sync-to-hblank' project
   lda #%10001000
   ldx #%10100000
   sta &fe07 ; MODE 1
